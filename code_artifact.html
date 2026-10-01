@@ -1,0 +1,576 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>越 - 个人资源库</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    fontFamily: {
+                        sans: ['Inter', 'PingFang SC', 'Hiragino Sans GB', 'Microsoft YaHei', 'sans-serif'],
+                    },
+                    colors: {
+                        brand: {
+                            50: '#f0f7ff',
+                            100: '#e0effe',
+                            500: '#3b82f6',
+                            600: '#2563eb',
+                            700: '#1d4ed8',
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        body {
+            font-family: 'Inter', 'PingFang SC', 'Microsoft YaHei', sans-serif;
+            background: linear-gradient(135deg, #f8fafc 0%, #eef2f6 100%);
+            min-height: 100vh;
+        }
+        .card-hover {
+            transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+        .card-hover:hover {
+            transform: translateY(-4px);
+            box-shadow: 0 12px 24px -8px rgba(0, 0, 0, 0.08);
+        }
+        /* 自定义滚动条 */
+        ::-webkit-scrollbar {
+            width: 6px;
+            height: 6px;
+        }
+        ::-webkit-scrollbar-track {
+            background: rgba(0, 0, 0, 0.03);
+        }
+        ::-webkit-scrollbar-thumb {
+            background: rgba(0, 0, 0, 0.15);
+            border-radius: 3px;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: rgba(0, 0, 0, 0.25);
+        }
+    </style>
+</head>
+<body class="text-slate-800 antialiased flex flex-col min-h-screen">
+
+    <header class="sticky top-0 z-30 bg-white/80 backdrop-blur-md border-b border-slate-200/80 transition-all">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex items-center justify-between h-16 sm:h-20">
+                <!-- 品牌 Logo & 标题 -->
+                <div class="flex items-center space-x-3">
+                    <div class="w-10 h-10 rounded-xl bg-gradient-to-tr from-blue-600 to-indigo-500 flex items-center justify-center text-white font-bold text-xl shadow-md shadow-blue-500/20">
+                        越
+                    </div>
+                    <div>
+                        <h1 class="text-lg sm:text-xl font-bold bg-gradient-to-r from-slate-900 to-slate-700 bg-clip-text text-transparent">
+                            越的资源库
+                        </h1>
+                        <p class="text-xs text-slate-400 hidden sm:block">简洁 · 高效 · 个人极简导航与精选收藏</p>
+                    </div>
+                </div>
+
+                <!-- 顶部右侧操作栏 -->
+                <div class="flex items-center space-x-2 sm:space-x-3">
+                    <button id="exportBtn" onclick="exportData()" class="p-2 sm:px-3 sm:py-2 text-xs sm:text-sm text-slate-600 hover:text-slate-900 hover:bg-slate-100 rounded-lg transition border border-slate-200 flex items-center gap-1.5" title="备份数据">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/></svg>
+                        <span class="hidden sm:inline">导出</span>
+                    </button>
+                    <button id="importBtn" onclick="triggerImport()" class="p-2 sm:px-3 sm:py-2 text-xs sm:text-sm text-slate-600 hover:text-slate-900 hover:bg-slate-100 rounded-lg transition border border-slate-200 flex items-center gap-1.5" title="恢复备份">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"/></svg>
+                        <span class="hidden sm:inline">导入</span>
+                    </button>
+                    <input type="file" id="importInput" accept=".json" class="hidden" onchange="importData(event)">
+
+                    <button onclick="openModal()" class="px-3.5 py-2 sm:px-4 sm:py-2.5 text-xs sm:text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 active:scale-95 rounded-xl shadow-sm hover:shadow-blue-500/25 transition-all flex items-center gap-2">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/></svg>
+                        <span>添加资源</span>
+                    </button>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 sm:py-8 flex-grow w-full">
+        <!-- 搜索与筛选控制区域 -->
+        <div class="mb-8 space-y-4">
+            <!-- 搜索框 -->
+            <div class="relative max-w-2xl mx-auto">
+                <div class="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-slate-400">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/></svg>
+                </div>
+                <input type="text" id="searchInput" oninput="handleSearch()" placeholder="搜索资源名称、描述或标签..." class="w-full pl-10 pr-10 py-3 bg-white border border-slate-200/90 rounded-2xl shadow-sm text-sm placeholder-slate-400 focus:outline-none focus:border-blue-500 focus:ring-4 focus:ring-blue-500/10 transition">
+                <button id="clearSearchBtn" onclick="clearSearch()" class="hidden absolute inset-y-0 right-0 pr-3.5 flex items-center text-slate-400 hover:text-slate-600">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
+                </button>
+            </div>
+
+            <!-- 分类 Tab 按钮组 -->
+            <div id="categoryTabs" class="flex flex-wrap items-center justify-center gap-2 pt-2">
+                <!-- 动态由 JavaScript 填充 -->
+            </div>
+        </div>
+
+        <!-- 资源卡片网格容器 -->
+        <div id="resourceGrid" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 sm:gap-5">
+            <!-- 动态渲染内容 -->
+        </div>
+
+        <!-- 空状态提示 -->
+        <div id="emptyState" class="hidden text-center py-16">
+            <div class="w-16 h-16 mx-auto mb-4 bg-slate-100 text-slate-400 rounded-full flex items-center justify-center text-2xl">
+                🔍
+            </div>
+            <h3 class="text-base font-semibold text-slate-700">未找到相关资源</h3>
+            <p class="text-xs text-slate-400 mt-1 max-w-sm mx-auto">尝试更换关键词搜一下，或者点击顶部“添加资源”添加新收藏。</p>
+        </div>
+    </main>
+
+    <footer class="mt-auto border-t border-slate-200/60 bg-white/50 backdrop-blur-sm py-6">
+        <div class="max-w-7xl mx-auto px-4 text-center text-xs text-slate-400 space-y-2">
+            <p>© <span id="currentYear"></span> 越的资源库 · 简洁高效的个人资源导航</p>
+            <div class="flex items-center justify-center gap-4 text-slate-400">
+                <button onclick="resetToDefaultData()" class="hover:text-slate-600 underline decoration-slate-300">恢复默认数据</button>
+                <span>·</span>
+                <button onclick="clearAllData()" class="hover:text-red-500 underline decoration-slate-300">清空本地库</button>
+            </div>
+        </div>
+    </footer>
+
+    <div id="resourceModal" class="fixed inset-0 z-50 hidden flex items-center justify-center p-4 bg-slate-900/40 backdrop-blur-sm transition-opacity duration-200">
+        <div class="bg-white rounded-2xl shadow-xl w-full max-w-md overflow-hidden transform transition-all scale-95 opacity-0 duration-200" id="modalContainer">
+            <!-- Modal 头部 -->
+            <div class="px-6 py-4 border-b border-slate-100 flex items-center justify-between">
+                <h3 id="modalTitle" class="text-base font-bold text-slate-800">添加新资源</h3>
+                <button onclick="closeModal()" class="text-slate-400 hover:text-slate-600 p-1 rounded-lg hover:bg-slate-100 transition">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
+                </button>
+            </div>
+
+            <!-- Modal 表单 -->
+            <form id="resourceForm" onsubmit="handleFormSubmit(event)" class="p-6 space-y-4">
+                <input type="hidden" id="editingId">
+
+                <!-- 资源名称 & 图标 -->
+                <div class="grid grid-cols-4 gap-3">
+                    <div class="col-span-1">
+                        <label class="block text-xs font-medium text-slate-600 mb-1">图标/Emoji</label>
+                        <input type="text" id="iconInput" placeholder="🔗" maxlength="4" value="🔗" required class="w-full text-center py-2 bg-slate-50 border border-slate-200 rounded-xl text-lg focus:outline-none focus:border-blue-500 focus:bg-white transition">
+                    </div>
+                    <div class="col-span-3">
+                        <label class="block text-xs font-medium text-slate-600 mb-1">资源名称 *</label>
+                        <input type="text" id="titleInput" placeholder="例如：GitHub" required class="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:outline-none focus:border-blue-500 focus:bg-white transition">
+                    </div>
+                </div>
+
+                <!-- 分类选择 -->
+                <div>
+                    <label class="block text-xs font-medium text-slate-600 mb-1">资源分类 *</label>
+                    <select id="categoryInput" required class="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:outline-none focus:border-blue-500 focus:bg-white transition">
+                        <option value="常用网站">常用网站</option>
+                        <option value="软件工具">软件工具</option>
+                        <option value="学习资料">学习资料</option>
+                        <option value="影视娱乐">影视娱乐</option>
+                        <option value="设计素材">设计素材</option>
+                        <option value="其他">其他</option>
+                    </select>
+                </div>
+
+                <!-- 链接地址 -->
+                <div>
+                    <label class="block text-xs font-medium text-slate-600 mb-1">资源链接 (URL) *</label>
+                    <input type="url" id="urlInput" placeholder="https://example.com" required class="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:outline-none focus:border-blue-500 focus:bg-white transition">
+                </div>
+
+                <!-- 资源描述 -->
+                <div>
+                    <label class="block text-xs font-medium text-slate-600 mb-1">简短描述</label>
+                    <textarea id="descInput" rows="2" placeholder="简要说明此资源的用途或特点..." class="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:outline-none focus:border-blue-500 focus:bg-white transition resize-none"></textarea>
+                </div>
+
+                <!-- 按钮组 -->
+                <div class="pt-2 flex items-center justify-end space-x-3">
+                    <button type="button" onclick="closeModal()" class="px-4 py-2 text-xs font-medium text-slate-600 hover:bg-slate-100 rounded-xl transition">取消</button>
+                    <button type="submit" class="px-4 py-2 text-xs font-medium text-white bg-blue-600 hover:bg-blue-700 active:scale-95 rounded-xl shadow-sm transition">保存</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <div id="toast" class="fixed bottom-6 right-6 z-50 transform translate-y-10 opacity-0 pointer-events-none transition-all duration-300">
+        <div id="toastContent" class="bg-slate-900/90 backdrop-blur-md text-white text-xs sm:text-sm px-4 py-3 rounded-xl shadow-lg flex items-center space-x-2">
+            <span id="toastIcon">✅</span>
+            <span id="toastMessage">操作成功</span>
+        </div>
+    </div>
+
+    <script>
+        // 初始示例数据
+        const DEFAULT_RESOURCES = [
+            { id: '1', title: 'GitHub', category: '常用网站', url: 'https://github.com', desc: '全球最大的开源代码托管与协作平台。', icon: '🐙', createdAt: Date.now() - 10000 },
+            { id: '2', title: 'V2EX', category: '常用网站', url: 'https://www.v2ex.com', desc: '创意工作者的社区，讨论编程、设计与技术。', icon: '💬', createdAt: Date.now() - 9000 },
+            { id: '3', title: 'VS Code', category: '软件工具', url: 'https://code.visualstudio.com', desc: '轻量且强大的跨平台代码编辑器。', icon: '💻', createdAt: Date.now() - 8000 },
+            { id: '4', title: 'MDN Web 文档', category: '学习资料', url: 'https://developer.mozilla.org/zh-CN/', desc: '权威全面的 Web 开放技术标准文档。', icon: '📚', createdAt: Date.now() - 7000 },
+            { id: '5', title: 'Unsplash', category: '设计素材', url: 'https://unsplash.com', desc: '高质量无版权免费商业高清壁纸与图片。', icon: '🖼️', createdAt: Date.now() - 6000 },
+            { id: '6', title: 'Bilibili', category: '影视娱乐', url: 'https://www.bilibili.com', desc: '国内知名的弹幕视频与学习分享社区。', icon: '📺', createdAt: Date.now() - 5000 }
+        ];
+
+        const CATEGORIES = ['全部', '常用网站', '软件工具', '学习资料', '影视娱乐', '设计素材', '其他'];
+
+        // 状态变量
+        let resources = [];
+        let currentCategory = '全部';
+        let searchQuery = '';
+
+        // 页面初始化
+        window.addEventListener('DOMContentLoaded', () => {
+            document.getElementById('currentYear').textContent = new Date().getFullYear();
+            loadResources();
+            renderCategories();
+            renderResources();
+        });
+
+        // 从 LocalStorage 加载数据
+        function loadResources() {
+            const saved = localStorage.getItem('yue_resources_data');
+            if (saved) {
+                try {
+                    resources = JSON.parse(saved);
+                } catch (e) {
+                    console.error('解析本地数据错误，已还原', e);
+                    resources = [...DEFAULT_RESOURCES];
+                }
+            } else {
+                resources = [...DEFAULT_RESOURCES];
+                saveResources();
+            }
+        }
+
+        // 保存数据到 LocalStorage
+        function saveResources() {
+            localStorage.setItem('yue_resources_data', JSON.stringify(resources));
+        }
+
+        // 渲染分类 Tab
+        function renderCategories() {
+            const container = document.getElementById('categoryTabs');
+            container.innerHTML = CATEGORIES.map(cat => {
+                const isActive = cat === currentCategory;
+                const activeClasses = isActive 
+                    ? 'bg-blue-600 text-white shadow-sm' 
+                    : 'bg-white/80 text-slate-600 hover:bg-slate-100 hover:text-slate-900 border border-slate-200/80';
+                return `<button onclick="filterCategory('${cat}')" class="px-3.5 py-1.5 rounded-xl text-xs sm:text-sm font-medium transition-all ${activeClasses}">${cat}</button>`;
+            }).join('');
+        }
+
+        // 渲染资源卡片
+        function renderResources() {
+            const grid = document.getElementById('resourceGrid');
+            const emptyState = document.getElementById('emptyState');
+
+            // 过滤逻辑
+            const filtered = resources.filter(res => {
+                const matchCategory = currentCategory === '全部' || res.category === currentCategory;
+                const query = searchQuery.toLowerCase().trim();
+                const matchSearch = !query || 
+                    res.title.toLowerCase().includes(query) || 
+                    (res.desc && res.desc.toLowerCase().includes(query)) ||
+                    res.category.toLowerCase().includes(query);
+                return matchCategory && matchSearch;
+            });
+
+            if (filtered.length === 0) {
+                grid.innerHTML = '';
+                emptyState.classList.remove('hidden');
+                return;
+            }
+
+            emptyState.classList.add('hidden');
+            grid.innerHTML = filtered.map(res => `
+                <div class="bg-white/90 backdrop-blur-sm border border-slate-200/70 rounded-2xl p-4 sm:p-5 flex flex-col justify-between card-hover relative group">
+                    <div>
+                        <!-- 卡片顶部：图标、分类与操作按钮 -->
+                        <div class="flex items-start justify-between mb-3">
+                            <div class="flex items-center space-x-3">
+                                <div class="w-10 h-10 rounded-xl bg-slate-50 border border-slate-100 flex items-center justify-center text-xl shadow-inner">
+                                    ${escapeHtml(res.icon || '🔗')}
+                                </div>
+                                <div>
+                                    <h3 class="font-bold text-slate-800 text-sm sm:text-base line-clamp-1 group-hover:text-blue-600 transition-colors">
+                                        ${escapeHtml(res.title)}
+                                    </h3>
+                                    <span class="inline-block text-[10px] px-2 py-0.5 mt-0.5 font-medium bg-slate-100 text-slate-500 rounded-md">
+                                        ${escapeHtml(res.category)}
+                                    </span>
+                                </div>
+                            </div>
+
+                            <!-- 卡片右侧小菜单 (悬浮显示) -->
+                            <div class="opacity-100 sm:opacity-0 group-hover:opacity-100 transition-opacity flex items-center space-x-1">
+                                <button onclick="openModal('${res.id}')" title="编辑" class="p-1.5 text-slate-400 hover:text-blue-600 rounded-lg hover:bg-slate-100 transition">
+                                    <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/></svg>
+                                </button>
+                                <button onclick="deleteResource('${res.id}')" title="删除" class="p-1.5 text-slate-400 hover:text-red-600 rounded-lg hover:bg-slate-100 transition">
+                                    <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg>
+                                </button>
+                            </div>
+                        </div>
+
+                        <!-- 资源简述 -->
+                        <p class="text-slate-500 text-xs leading-relaxed line-clamp-2 mb-4 h-9">
+                            ${escapeHtml(res.desc || '暂无描述信息...')}
+                        </p>
+                    </div>
+
+                    <!-- 卡片底部链接与复制 -->
+                    <div class="pt-3 border-t border-slate-100 flex items-center space-x-2">
+                        <a href="${escapeHtml(res.url)}" target="_blank" rel="noopener noreferrer" class="flex-1 text-center py-1.5 px-3 bg-slate-50 hover:bg-blue-50 text-slate-700 hover:text-blue-600 text-xs font-medium rounded-xl transition border border-slate-100 flex items-center justify-center gap-1.5">
+                            <span>访问资源</span>
+                            <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"/></svg>
+                        </a>
+                        <button onclick="copyToClipboard('${escapeHtml(res.url)}')" title="复制链接" class="p-2 text-slate-400 hover:text-slate-700 hover:bg-slate-100 rounded-xl transition border border-slate-100">
+                            <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 5H6a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2v-1M8 5a2 2 0 002 2h2a2 2 0 002-2M8 5a2 2 0 012-2h2a2 2 0 012 2m0 0h2a2 2 0 012 2v3"/></svg>
+                        </button>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        // 分类切换
+        function filterCategory(cat) {
+            currentCategory = cat;
+            renderCategories();
+            renderResources();
+        }
+
+        // 搜索处理
+        function handleSearch() {
+            const input = document.getElementById('searchInput');
+            const clearBtn = document.getElementById('clearSearchBtn');
+            searchQuery = input.value;
+            
+            if (searchQuery) {
+                clearBtn.classList.remove('hidden');
+            } else {
+                clearBtn.classList.add('hidden');
+            }
+            renderResources();
+        }
+
+        function clearSearch() {
+            document.getElementById('searchInput').value = '';
+            searchQuery = '';
+            document.getElementById('clearSearchBtn').classList.add('hidden');
+            renderResources();
+        }
+
+        function openModal(id = null) {
+            const modal = document.getElementById('resourceModal');
+            const container = document.getElementById('modalContainer');
+            const form = document.getElementById('resourceForm');
+            const modalTitle = document.getElementById('modalTitle');
+
+            form.reset();
+
+            if (id) {
+                const item = resources.find(r => r.id === id);
+                if (item) {
+                    modalTitle.textContent = '编辑资源';
+                    document.getElementById('editingId').value = item.id;
+                    document.getElementById('titleInput').value = item.title;
+                    document.getElementById('categoryInput').value = item.category;
+                    document.getElementById('urlInput').value = item.url;
+                    document.getElementById('descInput').value = item.desc || '';
+                    document.getElementById('iconInput').value = item.icon || '🔗';
+                }
+            } else {
+                modalTitle.textContent = '添加新资源';
+                document.getElementById('editingId').value = '';
+                document.getElementById('iconInput').value = '🔗';
+            }
+
+            modal.classList.remove('hidden');
+            setTimeout(() => {
+                container.classList.remove('scale-95', 'opacity-0');
+                container.classList.add('scale-100', 'opacity-100');
+            }, 10);
+        }
+
+        function closeModal() {
+            const modal = document.getElementById('resourceModal');
+            const container = document.getElementById('modalContainer');
+            
+            container.classList.remove('scale-100', 'opacity-100');
+            container.classList.add('scale-95', 'opacity-0');
+            
+            setTimeout(() => {
+                modal.classList.add('hidden');
+            }, 200);
+        }
+
+        // 表单提交 (新建 / 更新)
+        function handleFormSubmit(e) {
+            e.preventDefault();
+            const id = document.getElementById('editingId').value;
+            const title = document.getElementById('titleInput').value.trim();
+            const category = document.getElementById('categoryInput').value;
+            let url = document.getElementById('urlInput').value.trim();
+            const desc = document.getElementById('descInput').value.trim();
+            const icon = document.getElementById('iconInput').value.trim() || '🔗';
+
+            if (!url.startsWith('http://') && !url.startsWith('https://')) {
+                url = 'https://' + url;
+            }
+
+            if (id) {
+                // 编辑模式
+                const index = resources.findIndex(r => r.id === id);
+                if (index !== -1) {
+                    resources[index] = { ...resources[index], title, category, url, desc, icon };
+                    showToast('资源更新成功');
+                }
+            } else {
+                // 新建模式
+                const newItem = {
+                    id: Date.now().toString(),
+                    title,
+                    category,
+                    url,
+                    desc,
+                    icon,
+                    createdAt: Date.now()
+                };
+                resources.unshift(newItem);
+                showToast('新资源添加成功');
+            }
+
+            saveResources();
+            renderResources();
+            closeModal();
+        }
+
+        // 删除资源
+        function deleteResource(id) {
+            if (confirm('确定要删除该资源吗？此操作无法撤销。')) {
+                resources = resources.filter(r => r.id !== id);
+                saveResources();
+                renderResources();
+                showToast('资源已删除', '🗑️');
+            }
+        }
+
+        // 剪贴板复制 (兼容 API 限制 fallback)
+        function copyToClipboard(text) {
+            const textarea = document.createElement('textarea');
+            textarea.value = text;
+            textarea.style.position = 'fixed';
+            textarea.style.opacity = '0';
+            document.body.appendChild(textarea);
+            textarea.select();
+            
+            try {
+                document.execCommand('copy');
+                showToast('链接已复制到剪贴板！');
+            } catch (err) {
+                showToast('复制失败，请手动复制', '⚠️');
+            } finally {
+                document.body.removeChild(textarea);
+            }
+        }
+
+        function exportData() {
+            const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(resources, null, 2));
+            const downloadAnchor = document.createElement('a');
+            downloadAnchor.setAttribute("href", dataStr);
+            downloadAnchor.setAttribute("download", `越的资源库_备份_${new Date().toISOString().slice(0, 10)}.json`);
+            document.body.appendChild(downloadAnchor);
+            downloadAnchor.click();
+            downloadAnchor.remove();
+            showToast('数据已成功导出');
+        }
+
+        function triggerImport() {
+            document.getElementById('importInput').click();
+        }
+
+        function importData(event) {
+            const file = event.target.files[0];
+            if (!file) return;
+
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                try {
+                    const imported = JSON.parse(e.target.result);
+                    if (Array.isArray(imported)) {
+                        resources = imported;
+                        saveResources();
+                        renderResources();
+                        showToast('资源库已成功还原/导入');
+                    } else {
+                        showToast('导入文件格式有误', '❌');
+                    }
+                } catch (err) {
+                    showToast('解析 JSON 文件失败', '❌');
+                }
+            };
+            reader.readAsText(file);
+            event.target.value = ''; // 重置文件输入
+        }
+
+        function resetToDefaultData() {
+            if (confirm('确定要恢复为初始示例数据吗？本地新增的数据将被覆盖。')) {
+                resources = [...DEFAULT_RESOURCES];
+                saveResources();
+                renderResources();
+                showToast('已重置为默认数据');
+            }
+        }
+
+        function clearAllData() {
+            if (confirm('危险：确定要清空全部资源吗？建议先导出备份。')) {
+                resources = [];
+                saveResources();
+                renderResources();
+                showToast('资源库已清空', '🧹');
+            }
+        }
+
+        // Toast 消息函数
+        function showToast(message, icon = '✅') {
+            const toast = document.getElementById('toast');
+            const toastMessage = document.getElementById('toastMessage');
+            const toastIcon = document.getElementById('toastIcon');
+
+            toastMessage.textContent = message;
+            toastIcon.textContent = icon;
+
+            toast.classList.remove('translate-y-10', 'opacity-0', 'pointer-events-none');
+            toast.classList.add('translate-y-0', 'opacity-100');
+
+            setTimeout(() => {
+                toast.classList.remove('translate-y-0', 'opacity-100');
+                toast.classList.add('translate-y-10', 'opacity-0', 'pointer-events-none');
+            }, 2500);
+        }
+
+        // 转义 HTML 字符防 XSS
+        function escapeHtml(str) {
+            return String(str || '').replace(/[&<>"']/g, function(m) {
+                return {
+                    '&': '&amp;',
+                    '<': '&lt;',
+                    '>': '&gt;',
+                    '"': '&quot;',
+                    "'": '&#39;'
+                }[m];
+            });
+        }
+    </script>
+</body>
+</html>
